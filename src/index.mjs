@@ -7,7 +7,7 @@ function parse(str, options)
 	parser.end();
 }
 
-function parseStream(stream, options)
+function parseStream(readable, options)
 {
 	return new Promise((resolve, reject) =>
 	{
@@ -15,8 +15,8 @@ function parseStream(stream, options)
 
 		const onError = error =>
 		{
-			stream.off('data', onData);
-			stream.off('close', onEnd);
+			readable.off('data', onData);
+			readable.off('close', onEnd);
 			reject(error);
 		};
 
@@ -45,9 +45,9 @@ function parseStream(stream, options)
 			}
 		};
 
-		stream.setEncoding('utf8');
-		stream.on('data', onData);
-		stream.once('end', onEnd);
+		readable.setEncoding('utf8');
+		readable.on('data', onData);
+		readable.once('end', onEnd);
 	});
 }
 
