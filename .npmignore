@@ -1,0 +1,6 @@
+.vscode/
+script/
+test/
+.eslintrc.json
+.gitignore
+*.md

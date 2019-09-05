@@ -1,0 +1,70 @@
+{
+	"extends": "eslint:recommended",
+	"env": {
+		"browser": true,
+		"node": true
+	},
+	"globals": {
+		"Promise": "readonly",
+		"Symbol": "readonly",
+		"Set": "readonly",
+		"Map": "readonly"
+	},
+	"parserOptions": {
+		"ecmaVersion": 2018,
+		"sourceType": "module",
+		"allowImportExportEverywhere": true
+	},
+	"rules": {
+		"no-trailing-spaces": "error",
+		"no-console": "warn",
+		"no-shadow": "error",
+		"no-unused-expressions": "off",
+		"no-unused-labels": "error",
+		"no-unused-vars": "error",
+		"eqeqeq": "error",
+		"one-var": [
+			"error",
+			"never"
+		],
+		"indent": [
+			"error",
+			"tab",
+			{
+				"SwitchCase": 1,
+				"ObjectExpression": 1
+			}
+		],
+		"linebreak-style": [
+			"error",
+			"unix"
+		],
+		"semi": [
+			"error",
+			"always"
+		],
+		"quotes": [
+			"error",
+			"single"
+		],
+		"max-lines": [
+			"warn",
+			{
+				"max": 300,
+				"skipBlankLines": true,
+				"skipComments": true
+			}
+		],
+		"max-len": [
+			"warn",
+			{
+				"code": 180,
+				"tabWidth": 4,
+				"comments": 180,
+				"ignoreUrls": true,
+				"ignoreTemplateLiterals": false,
+				"ignoreRegExpLiterals": true
+			}
+		]
+	}
+}

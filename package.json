@@ -1,0 +1,17 @@
+{
+	"name": "@calmdownval/xml-sax",
+	"version": "0.0.1",
+	"type": "module",
+	"main": "src/index.mjs",
+	"license": "MIT",
+	"description": "SAX style XML parser",
+	"keywords": [
+		"xml",
+		"sax",
+		"parser"
+	],
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/vaclavlahuta/xml-sax.git"
+	}
+}
