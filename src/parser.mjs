@@ -1,4 +1,3 @@
-/* eslint-disable max-lines */
 import { parseDec, parseHex } from './numberUtils.mjs';
 import { getChar } from './utf16.mjs';
 
@@ -73,6 +72,7 @@ export default function createParser(
 		onInstruction = noOp,
 		onTagClose = noOp,
 		onTagOpen = noOp,
+		onTagOpenEnd = noOp,
 		onText = noOp
 	} = {})
 {
@@ -277,6 +277,7 @@ export default function createParser(
 			switch (char)
 			{
 				case '>':
+					onTagOpenEnd();
 					phase = P_PCDATA;
 					tagName = null;
 					break;
@@ -413,6 +414,7 @@ export default function createParser(
 		{
 			if (char === '>')
 			{
+				onTagOpenEnd();
 				onTagClose(tagName, true);
 				tagName = null;
 				phase = P_PCDATA;

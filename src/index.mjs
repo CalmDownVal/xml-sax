@@ -37,7 +37,7 @@ function parseStream(readable, options)
 			try
 			{
 				parser.end();
-				resolve(document);
+				resolve();
 			}
 			catch (error)
 			{

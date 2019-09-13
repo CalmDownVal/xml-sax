@@ -47,14 +47,6 @@
 			"error",
 			"single"
 		],
-		"max-lines": [
-			"warn",
-			{
-				"max": 300,
-				"skipBlankLines": true,
-				"skipComments": true
-			}
-		],
 		"max-len": [
 			"warn",
 			{
