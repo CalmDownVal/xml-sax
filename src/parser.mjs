@@ -277,9 +277,7 @@ export default function createParser(
 			switch (char)
 			{
 				case '>':
-					onTagOpenEnd();
 					phase = P_PCDATA;
-					tagName = null;
 					break;
 
 				case '/':
@@ -311,6 +309,12 @@ export default function createParser(
 					case P_ATTR_VALUE:
 						onAttribute(attrName, getMarked());
 						break;
+				}
+
+				if (phase === P_PCDATA)
+				{
+					onTagOpenEnd(tagName);
+					tagName = null;
 				}
 				return;
 			}
@@ -414,7 +418,7 @@ export default function createParser(
 		{
 			if (char === '>')
 			{
-				onTagOpenEnd();
+				onTagOpenEnd(tagName);
 				onTagClose(tagName, true);
 				tagName = null;
 				phase = P_PCDATA;
