@@ -1,0 +1,50 @@
+{
+	"defaultSeverity": "error",
+	"extends": "tslint:recommended",
+	"rules": {
+		"eofline": true,
+		"indent": [
+			true,
+			"tabs",
+			4
+		],
+		"one-line": false,
+		"quotemark": [
+			true,
+			"single",
+			"avoid-template"
+		],
+		"trailing-comma": [
+			true,
+			{
+				"multiline": "never",
+				"singleline": "never"
+			}
+		],
+		"variable-name": [
+			true,
+			"check-format",
+			"allow-leading-underscore",
+			"allow-pascal-case"
+		],
+		"no-default-export": true,
+		"no-default-import": true,
+		"arrow-parens": [
+			true,
+			"ban-single-arg-parens"
+		],
+		"forin": false,
+		"no-empty": [
+			true,
+			"allow-empty-catch",
+			"allow-empty-functions"
+		],
+		"no-bitwise": false,
+		"no-parameter-reassignment": true,
+		"max-line-length": false,
+		"object-literal-key-quotes": [
+			true,
+			"as-needed"
+		]
+	}
+}
