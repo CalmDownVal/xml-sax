@@ -59,7 +59,7 @@ const P_ATTR_VALUE = 117;
  *   Once end() has been called the parser remains in a disposed state, calling write
  *   results in undefined behavior.
  */
-export default function createParser(
+export function createParser(
 	{
 		// list of known entities
 		entities = DEFAULT_ENTITIES,

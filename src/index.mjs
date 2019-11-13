@@ -1,4 +1,4 @@
-import createParser from './parser.mjs';
+import { createParser } from './parser.mjs';
 
 function parse(str, options)
 {
