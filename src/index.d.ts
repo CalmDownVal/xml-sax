@@ -1,5 +1,3 @@
-import { Readable as ReadableStream } from 'stream';
-
 export declare interface IParserOptions
 {
 	entities?: { [key: string]: string };
