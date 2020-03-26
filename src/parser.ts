@@ -1,7 +1,80 @@
-import { parseDec, parseHex } from './numberUtils.mjs';
-import { getChar } from './utf16.mjs';
+import { parseDec, parseHex } from './numberUtils';
+import { getChar } from './utf16';
 
-// regexes
+interface IEntityMap
+{
+	[name: string]: string | undefined;
+}
+
+export interface IParserOptions
+{
+	/**
+	 * A map of known named entities to use when parsing.
+	 */
+	entities?: IEntityMap;
+
+	/**
+	 * Called whenever an attribute has been parsed.
+	 */
+	onAttribute?: (name: string, value: string | null) => void;
+
+	/**
+	 * Called whenever a CDATA block has been read.
+	 */
+	onCData?: (data: string) => void;
+
+	/**
+	 * Called whenever a comment has been parsed.
+	 */
+	onComment?: (data: string) => void;
+
+	/**
+	 * Called whenever a declaration has been parsed.
+	 */
+	onDeclaration?: (body: string, comment: string | null) => void;
+
+	/**
+	 * Called whenever a processing instruction has been parsed.
+	 */
+	onInstruction?: (target: string, body: string) => void;
+
+	/**
+	 * Called when a closing tag has been reached.
+	 */
+	onTagClose?: (name: string, isSelfClosing: boolean) => void;
+
+	/**
+	 * Called when a beginning of an opening tag is reached.
+	 */
+	onTagOpen?: (name: string) => void;
+
+	/**
+	 * Called once the entirety of an opening tag has been read.
+	 */
+	onTagOpenEnd?: (name: string) => void;
+
+	/**
+	 * Called whenever plain text was read.
+	 */
+	onText?: (text: string) => void;
+}
+
+export interface IParser
+{
+	/**
+	 * Call this method once all data has been written to indicate the end of
+	 * document. Once end() has been called the parser remains in a disposed
+	 * state, calling write results in undefined behavior.
+	 */
+	end: () => void;
+
+	/**
+	 * Call this method to feed data to the parser, can be called many times.
+	 */
+	write: (chunk: string) => void;
+}
+
+// regular expressions
 const RE_TAG_START = /^[^\s!?"#$%&'()[\]{}<>*+,/;=@\\^`|~]/;
 const RE_WS = /^\s/;
 const RE_QUOTE = /^["'`]/;
@@ -11,17 +84,28 @@ const CDATA_START = '[CDATA[';
 const CDATA_END = ']]>';
 
 // default known entities
-const DEFAULT_ENTITIES =
+const DEFAULT_ENTITIES: IEntityMap =
 {
-	lt: '<',
-	gt: '>',
 	amp: '&',
 	apos: '\'',
-	quot: '"',
+	gt: '>',
+	lt: '<',
+	quot: '"'
 };
 
-// default no-op handler
-function noOp() {}
+// helpers
+function assertNotNull<T>(obj: T): asserts obj is NonNullable<T>
+{
+	if (obj === null)
+	{
+		throw new Error('assertion failed: value is null');
+	}
+}
+
+function noOp()
+{
+	// do nothing...
+}
 
 // parser phases (lowest 4 bits are reserved for sub-phases)
 const P_PCDATA = 0;
@@ -49,22 +133,11 @@ const P_ATTR_VALUE = 117;
 
 /**
  * Creates a SAX-style XML parser.
- * Parsing is stateful and you should create a new parser instance for each document.
- *
- * The parser exposes two methods:
- * - `write(str: string): void`
- *   Call this method to feed data to the parser, can be called many times.
- * - `end(): void`
- *   Call this method once all data has been written to indicate the end of document.
- *   Once end() has been called the parser remains in a disposed state, calling write
- *   results in undefined behavior.
+ * Parsing is stateful. Always create a new parser instance per document.
  */
 export function createParser(
 	{
-		// list of known entities
 		entities = DEFAULT_ENTITIES,
-
-		// available events
 		onAttribute = noOp,
 		onCData = noOp,
 		onComment = noOp,
@@ -74,25 +147,95 @@ export function createParser(
 		onTagOpen = noOp,
 		onTagOpenEnd = noOp,
 		onText = noOp
-	} = {})
+	}: IParserOptions = {}): IParser
 {
-	let current;
-	let index;
-	let phase = P_PCDATA;
+	let current = '';
 	let buffer = '';
-	let anchorStart = 0;
-	let anchorEnd = 0;
-	let entityStart;
-	let seqIndex;
-	let quote;
-	let instructionTarget;
-	let declarationBody;
-	let tagName;
-	let hyphens;
-	let isComment;
-	let attrName;
+	let quote = '';
+	let isComment = false;
+	let hyphens = 0;
+	let index = 0;
+	let phase = P_PCDATA;
+	let anchorStart: number | null = 0;
+	let anchorEnd: number | null = 0;
+	let entityStart: number | null = null;
+	let seqIndex: number | null = null;
+	let instructionTarget: string | null = null;
+	let declarationBody: string | null = null;
+	let tagName: string | null = null;
+	let attrName: string | null = null;
 
-	const phases =
+	const markStart = (includeCurrent = false) =>
+	{
+		buffer = '';
+		anchorStart = index + (includeCurrent ? 0 : 1);
+		anchorEnd = anchorStart;
+	};
+
+	const markEnd = () =>
+	{
+		anchorEnd = buffer.length + index;
+	};
+
+	const getMarked = (mark = true) =>
+	{
+		assertNotNull(anchorStart);
+		assertNotNull(anchorEnd);
+
+		if (mark)
+		{
+			markEnd();
+		}
+
+		const marked = (buffer + current).slice(anchorStart, anchorEnd);
+		buffer = '';
+		anchorStart = null;
+		anchorEnd = null;
+
+		return marked;
+	};
+
+	const markEntityStart = () =>
+	{
+		entityStart = buffer.length + index;
+	};
+
+	const getEntity = (name: string) =>
+	{
+		if (name[0] === '#')
+		{
+			const charCode = name[1] === 'x' ? parseHex(name, 2) : parseDec(name, 1);
+			return getChar(charCode);
+		}
+		return entities[name];
+	};
+
+	const markEntityEnd = () =>
+	{
+		const offset = buffer.length + index;
+		if (entityStart !== null && entityStart !== offset)
+		{
+			const concat = buffer + current;
+			const entity = concat.slice(entityStart + 1, offset);
+			const char = getEntity(entity);
+
+			if (typeof char === 'string' && anchorStart !== null && anchorEnd !== null)
+			{
+				buffer = '';
+				current = concat.slice(anchorStart, entityStart) + char + concat.slice(offset + 1);
+
+				const diff = anchorStart + 2 + entity.length - char.length;
+				index -= diff;
+				anchorEnd -= diff;
+				anchorStart = 0;
+			}
+
+			entityStart = null;
+		}
+	};
+
+	/* eslint-disable sort-keys */
+	const phases: { [phase: number]: (char: string) => void } =
 	{
 		[P_PCDATA](char)
 		{
@@ -223,6 +366,8 @@ export function createParser(
 		},
 		[P_CDATA](char)
 		{
+			assertNotNull(seqIndex);
+
 			if (char === CDATA_END[seqIndex])
 			{
 				if (++seqIndex === 1)
@@ -262,6 +407,7 @@ export function createParser(
 		{
 			if (char === '>')
 			{
+				assertNotNull(instructionTarget);
 				onInstruction(instructionTarget, getMarked(false));
 				instructionTarget = null;
 				phase = P_PCDATA;
@@ -299,6 +445,7 @@ export function createParser(
 						break;
 
 					case P_ATTR_SEEK_EQ:
+						assertNotNull(attrName);
 						onAttribute(attrName, null);
 						break;
 
@@ -307,12 +454,14 @@ export function createParser(
 						break;
 
 					case P_ATTR_VALUE:
+						assertNotNull(attrName);
 						onAttribute(attrName, getMarked());
 						break;
 				}
 
 				if (phase === P_PCDATA)
 				{
+					assertNotNull(tagName);
 					onTagOpenEnd(tagName);
 					tagName = null;
 				}
@@ -361,6 +510,7 @@ export function createParser(
 					}
 					else if (!RE_WS.test(char))
 					{
+						assertNotNull(attrName);
 						onAttribute(attrName, null);
 						attrName = null;
 						markStart(true);
@@ -388,6 +538,7 @@ export function createParser(
 				case P_ATTR_VALUE:
 					if (RE_WS.test(char))
 					{
+						assertNotNull(attrName);
 						onAttribute(attrName, getMarked());
 						attrName = null;
 						phase = P_ATTR_SEEK_NAME;
@@ -400,6 +551,7 @@ export function createParser(
 			switch (char)
 			{
 				case quote:
+					assertNotNull(attrName);
 					onAttribute(attrName, getMarked());
 					attrName = null;
 					phase = P_ATTR_SEEK_NAME;
@@ -418,6 +570,7 @@ export function createParser(
 		{
 			if (char === '>')
 			{
+				assertNotNull(tagName);
 				onTagOpenEnd(tagName);
 				onTagClose(tagName, true);
 				tagName = null;
@@ -456,79 +609,9 @@ export function createParser(
 			}
 		}
 	};
+	/* eslint-enable */
 
-	function markStart(includeCurrent = false)
-	{
-		buffer = '';
-		anchorStart = index + (includeCurrent ? 0 : 1);
-		anchorEnd = anchorStart;
-	}
-
-	function markEnd()
-	{
-		anchorEnd = buffer.length + index;
-	}
-
-	function getMarked(mark = true)
-	{
-		if (anchorStart === null)
-		{
-			return null;
-		}
-
-		if (mark)
-		{
-			markEnd();
-		}
-
-		const marked = (buffer + current).slice(anchorStart, anchorEnd);
-		buffer = '';
-		anchorStart = null;
-		anchorEnd = null;
-
-		return marked;
-	}
-
-	function markEntityStart()
-	{
-		entityStart = buffer.length + index;
-	}
-
-	function markEntityEnd()
-	{
-		const offset = buffer.length + index;
-		if (entityStart !== null && entityStart !== offset)
-		{
-			const concat = buffer + current;
-			const entity = concat.slice(entityStart + 1, offset);
-			const char = getEntity(entity);
-
-			if (char && typeof char === 'string')
-			{
-				buffer = '';
-				current = concat.slice(anchorStart, entityStart) + char + concat.slice(offset + 1);
-
-				const diff = anchorStart + 2 + entity.length - char.length;
-				index -= diff;
-				anchorEnd -= diff;
-				anchorStart = 0;
-			}
-
-			entityStart = null;
-		}
-	}
-
-	function getEntity(name)
-	{
-		if (name[0] === '#')
-		{
-			const charCode = name[1] === 'x' ? parseHex(name, 2) : parseDec(name, 1);
-			return getChar(charCode);
-		}
-		return entities[name];
-	}
-
-	function write(str)
+	const write = (str: string) =>
 	{
 		current = str;
 		for (index = 0; index < current.length; ++index)
@@ -537,10 +620,16 @@ export function createParser(
 			phases[phase & 240](char);
 		}
 
-		if (anchorStart !== 0)
+		if (anchorStart === null)
 		{
+			buffer = '';
+		}
+		else if (anchorStart > 0)
+		{
+			assertNotNull(anchorEnd);
+
 			buffer = current.slice(anchorStart);
-			anchorEnd -= anchorStart;
+			anchorEnd = Math.max(anchorEnd - anchorStart, 0);
 			anchorStart = 0;
 		}
 		else
@@ -548,10 +637,10 @@ export function createParser(
 			buffer += current;
 		}
 
-		current = null;
-	}
+		current = '';
+	};
 
-	function end()
+	const end = () =>
 	{
 		current = '';
 		index = 0;
@@ -570,9 +659,9 @@ export function createParser(
 				break;
 		}
 
-		current = null;
-		buffer = null;
-	}
+		current = '';
+		buffer = '';
+	};
 
-	return { write, end };
+	return { end, write };
 }
