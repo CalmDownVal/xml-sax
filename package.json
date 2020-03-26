@@ -5,10 +5,11 @@
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
 	"license": "MIT",
-	"description": "SAX style XML parser",
+	"description": "event driven XML parser",
 	"keywords": [
 		"xml",
 		"sax",
+		"event",
 		"parser"
 	],
 	"repository": {
