@@ -1,3 +1,5 @@
+src/
 .editorconfig
 .eslintrc
-tslint.json
+tsconfig.json
+yarn.lock

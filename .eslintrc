@@ -1,42 +1,39 @@
 {
-	"extends": "eslint:recommended",
-	"env": {
-		"browser": true,
-		"node": true
-	},
-	"globals": {
-		"Promise": "readonly",
-		"Symbol": "readonly",
-		"Set": "readonly",
-		"Map": "readonly"
-	},
+	"extends": [
+		"plugin:@typescript-eslint/recommended",
+		"plugin:import/errors",
+		"plugin:import/warnings",
+		"plugin:import/typescript"
+	],
+	"parser": "@typescript-eslint/parser",
 	"parserOptions": {
 		"ecmaVersion": 2018,
-		"sourceType": "module",
-		"allowImportExportEverywhere": true
+		"sourceType": "module"
 	},
+	"root": true,
 	"rules": {
-		"no-trailing-spaces": "error",
+		"no-bitwise": "off",
+		"no-trailing-spaces": "warn",
 		"no-console": "warn",
+		"no-alert": "warn",
 		"no-shadow": "error",
-		"no-unused-expressions": "off",
-		"no-unused-labels": "error",
-		"no-unused-vars": "error",
 		"eqeqeq": "error",
+		"curly": "warn",
+		"eol-last": "warn",
+		"camelcase": "warn",
+		"no-empty": "warn",
+		"no-param-reassign": "error",
+		"arrow-spacing": "warn",
+		"arrow-body-style": [
+			"warn",
+			"as-needed"
+		],
 		"one-var": [
-			"error",
+			"warn",
 			"never"
 		],
-		"indent": [
-			"error",
-			"tab",
-			{
-				"SwitchCase": 1,
-				"ObjectExpression": 1
-			}
-		],
 		"linebreak-style": [
-			"error",
+			"warn",
 			"unix"
 		],
 		"semi": [
@@ -44,18 +41,70 @@
 			"always"
 		],
 		"quotes": [
-			"error",
-			"single"
+			"warn",
+			"single",
+			{
+				"avoidEscape": true,
+				"allowTemplateLiterals": false
+			}
 		],
-		"max-len": [
+		"quote-props": [
+			"warn",
+			"as-needed"
+		],
+		"arrow-parens": [
+			"warn",
+			"as-needed"
+		],
+		"sort-keys": [
+			"warn",
+			"asc",
+			{
+				"natural": true
+			}
+		],
+
+		// typescript
+		"@typescript-eslint/explicit-function-return-type": "off",
+		"@typescript-eslint/no-untyped-public-signature": "off",
+		"@typescript-eslint/no-non-null-assertion": "off",
+		"@typescript-eslint/no-inferrable-types": "off",
+		"@typescript-eslint/no-explicit-any": "off",
+		"@typescript-eslint/explicit-member-accessibility": "warn",
+		"@typescript-eslint/interface-name-prefix": [
 			"warn",
 			{
-				"code": 180,
-				"tabWidth": 4,
-				"comments": 180,
-				"ignoreUrls": true,
-				"ignoreTemplateLiterals": false,
-				"ignoreRegExpLiterals": true
+				"prefixWithI": "always"
+			}
+		],
+		"indent": "off",
+		"@typescript-eslint/indent": [
+			"warn",
+			"tab",
+			{
+				"SwitchCase": 1
+			}
+		],
+		"brace-style": "off",
+		"@typescript-eslint/brace-style": [
+			"warn",
+			"allman"
+		],
+
+		// imports
+		"import/order": [
+			"warn",
+			{
+				"groups": [
+					"builtin",
+					[ "external", "internal" ],
+					[ "sibling", "parent", "index" ]
+				],
+				"newlines-between": "always",
+				"alphabetize": {
+					"order": "asc",
+					"caseInsensitive": true
+				}
 			}
 		]
 	}

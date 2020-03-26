@@ -1,0 +1,23 @@
+{
+	"compilerOptions": {
+		"baseUrl": "./src",
+		"charset": "utf8",
+		"declaration": true,
+		"forceConsistentCasingInFileNames": true,
+		"lib": [
+			"esnext"
+		],
+		"module": "commonjs",
+		"moduleResolution": "node",
+		"newLine": "lf",
+		"outDir": "./dist",
+		"strict": true,
+		"target": "esnext",
+		"types": [
+			"@types/node"
+		]
+	},
+	"include": [
+		"./src/**/*.ts"
+	]
+}
