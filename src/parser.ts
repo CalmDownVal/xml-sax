@@ -132,11 +132,12 @@ const P_ATTR_SEEK_VALUE = 116;
 const P_ATTR_VALUE = 117;
 
 /**
- * Creates a SAX-style XML parser.
+ * Constructs a new XML parser.
  * Parsing is stateful. Always create a new parser instance per document.
  */
-export function createParser(
-	{
+export function createParser(options: IParserOptions = {}): IParser
+{
+	const {
 		entities = DEFAULT_ENTITIES,
 		onAttribute = noOp,
 		onCData = noOp,
@@ -147,8 +148,8 @@ export function createParser(
 		onTagOpen = noOp,
 		onTagOpenEnd = noOp,
 		onText = noOp
-	}: IParserOptions = {}): IParser
-{
+	} = options;
+
 	let current = '';
 	let buffer = '';
 	let quote = '';

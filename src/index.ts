@@ -1,14 +1,14 @@
 import { createParser, IParser, IParserOptions } from './parser';
 export { createParser, IParser, IParserOptions };
 
-export function parse(str: string, options: IParserOptions)
+export function parse(str: string, options?: IParserOptions)
 {
 	const parser = createParser(options);
 	parser.write(str);
 	parser.end();
 }
 
-export function parseStream(readable: NodeJS.ReadableStream, options: IParserOptions)
+export function parseStream(readable: NodeJS.ReadableStream, options?: IParserOptions)
 {
 	return new Promise<void>((resolve, reject) =>
 	{
