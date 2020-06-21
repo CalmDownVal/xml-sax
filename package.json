@@ -14,7 +14,7 @@
 	],
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/vaclavlahuta/xml-sax.git"
+		"url": "https://github.com/CalmDownVal/xml-sax.git"
 	},
 	"scripts": {
 		"build": "tsc",
